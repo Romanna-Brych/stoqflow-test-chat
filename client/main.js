@@ -3,31 +3,49 @@ import { ReactiveVar } from "meteor/reactive-var";
 import { MessagesCollection } from "../imports/MessagesCollection";
 
 import "./main.html";
-
-// Template.hello.onCreated(function helloOnCreated() {
-//   // counter starts at 0
-//   this.counter = new ReactiveVar(0);
-// });
-
-// Template.hello.helpers({
-//   counter() {
-//     return Template.instance().counter.get();
-//   },
-// });
-
-// Template.hello.events({
-//   'click button'(event, instance) {
-//     // increment the counter when button is clicked
-//     instance.counter.set(instance.counter.get() + 1);
-//   },
-// });
+import "./main.css";
 
 Template.chat.onCreated(function () {
   this.subscribe("messages");
+
+  //instance
+  // (useState)
+  this.sender = new ReactiveVar("receiver");
+  this.recipient = new ReactiveVar("userone");
 });
 
 Template.chat.helpers({
   messages() {
     return MessagesCollection.find();
+  },
+
+  isSender(user) {
+    return Template.instance().sender.get() === user;
+  },
+
+  isRecipient(user) {
+    return Template.instance().recipient.get() === user;
+  },
+});
+
+Template.chat.events({
+  "change [name='sender']"(event, instance) {
+    instance.sender.set(event.target.value);
+  },
+
+  "change [name='recipient']"(event, instance) {
+    instance.recipient.set(event.target.value);
+  },
+
+  "submit .message-form"(event, instance) {
+    event.preventDefault();
+
+    const text = event.target.message.value;
+    const from = instance.sender.get();
+    const to = instance.recipient.get();
+
+    Meteor.call("messages.send", { from, to, text });
+
+    event.target.reset();
   },
 });
